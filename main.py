@@ -1,26 +1,3 @@
-"""Time-series Generative Adversarial Networks (TimeGAN) Codebase.
-
-Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar, 
-"Time-series Generative Adversarial Networks," 
-Neural Information Processing Systems (NeurIPS), 2019.
-
-Paper link: https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks
-
-Last updated Date: April 24th 2020
-Code author: Jinsung Yoon (jsyoon0823@gmail.com)
-
------------------------------
-
-main_timegan.py
-
-(1) Import data
-(2) Generate synthetic data
-(3) Evaluate the performances in three ways
-  - Visualization (t-SNE, PCA)
-  - Discriminative score
-  - Predictive score
-"""
-
 ## Necessary packages
 from __future__ import absolute_import
 from __future__ import division
@@ -130,7 +107,6 @@ def main (args):
     dgan = DGAN(config)    
   elif args.model == 'ttsgan':
     # import network
-    
     gen_net = Generator(
         seq_len=args.seq_len, 
         patch_size=3, 
@@ -152,30 +128,27 @@ def main (args):
         n_classes=1, 
     )
 
+  logger.info("\n")
+  logger.info("Train and Generating data!")
+  if args.model == 'rtsgan':
+    aegan.train_ae(train_set, args.epochs)
+    res, h = aegan.eval_ae(train_set)
+    aegan.train_gan(train_set, args.iterations, args.d_update)
+    generated_data = aegan.synthesize(len(train_set))
+  elif args.model == 'timegan':
+    generated_data = timegan(dataset, params)
+  elif args.model == 'doublegan':
+    dgan.internal_train(dataset)
+    _, generated_data = dgan.generate(len(train_set))
+  elif args.model == 'ttsgan':
+    pass
   
-  
-  generated_data = timegan(ori_data, params)
-  
-  aegan.train_ae(train_set, args.epochs)
-  res, h = aegan.eval_ae(train_set)
-  aegan.train_gan(train_set, args.iterations, args.d_update)
+
   '''
   with open("{}/hidden".format(root_dir), "wb") as f:
       pickle.dump(h, f)
   '''
 
-  dgan.train(dataset)
-
-    
-   
-  
-      
-  
-  
-  
-  
-  
-  
   print('Finish Synthetic Data Generation')
   
   ## Performance metrics   
@@ -257,6 +230,10 @@ if __name__ == '__main__':
       help='Training iterations (should be optimized)',
       default=50000,
       type=int)
+  parser.add_argument("--rts_epochs", default=1000, dest="epochs", type=int,
+                    help="Number of full passes through training set for autoencoder (only for rtsgan and dgan)")
+  parser.add_argument("--d-update", default=5, dest="d_update", type=int,
+                    help="discriminator updates per generator update")
   parser.add_argument(
       '--batch_size',
       help='the number of samples in mini-batch (should be optimized)',
