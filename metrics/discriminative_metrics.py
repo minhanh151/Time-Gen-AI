@@ -19,11 +19,12 @@ Output: discriminative score (np.abs(classification accuracy - 0.5))
 """
 
 # Necessary Packages
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
 from sklearn.metrics import accuracy_score
 from utils import train_test_divide, extract_time, batch_generator
-
+from tf_slim.layers import layers as _layers
 
 def discriminative_score_metrics (ori_data, generated_data):
   """Use post-hoc RNN to classify original data and synthetic data
@@ -76,7 +77,7 @@ def discriminative_score_metrics (ori_data, generated_data):
     with tf.variable_scope("discriminator", reuse = tf.AUTO_REUSE) as vs:
       d_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_dim, activation=tf.nn.tanh, name = 'd_cell')
       d_outputs, d_last_states = tf.nn.dynamic_rnn(d_cell, x, dtype=tf.float32, sequence_length = t)
-      y_hat_logit = tf.contrib.layers.fully_connected(d_last_states, 1, activation_fn=None) 
+      y_hat_logit = _layers.fully_connected(d_last_states, 1, activation_fn=None) 
       y_hat = tf.nn.sigmoid(y_hat_logit)
       d_vars = [v for v in tf.all_variables() if v.name.startswith(vs.name)]
     

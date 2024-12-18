@@ -2,3 +2,7 @@ RTSGAN
 tts-gan
 main-stock.py
 main_timegan.py
+report.txt
+metrics_old
+*=*
+*__pycache**

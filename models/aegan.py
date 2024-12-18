@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-
+import os
+os.sys.path.append('models')
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -138,6 +139,7 @@ class AeGAN:
                 sta = None
                 dyn = batch_x["dyn"].to(self.device)
                 seq_len = batch_x["seq_len"].to(self.device)
+                # print(self.device)
                 out_sta, out_dyn = self.ae(sta, dyn, seq_len)
                 loss1 = 0 #self.sta_loss(out_sta, sta)
                 loss2 = self.dyn_loss(out_dyn, dyn, seq_len)

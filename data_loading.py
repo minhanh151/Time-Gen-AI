@@ -22,9 +22,8 @@ data_loading.py
 
 ## Necessary Packages
 import numpy as np
-import numpy as np
 import pandas as pd 
-from model.missingprocessor import Processor
+from models.missingprocessor import Processor
 import pickle
 from fastNLP import DataSet
 
@@ -121,7 +120,7 @@ def real_data_loading (data_name, seq_len):
 
 
 def loading_RTS_dataset(data_path, data_name, seq_len, return_dict=False):
-  seq_len = 24
+  # seq_len = 24
   df = pd.read_csv('{}/{}_data.csv'.format(data_path,data_name), sep = ",")
   types = ["continuous" for i in range(len(df.columns))]
 
