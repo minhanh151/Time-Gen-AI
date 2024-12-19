@@ -72,7 +72,8 @@ def main():
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
         
-def main_worker(gpu, ngpus_per_node, args):
+def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
+    '''
     args.gpu = gpu
     
     if args.gpu is not None:
@@ -87,6 +88,7 @@ def main_worker(gpu, ngpus_per_node, args):
             args.rank = args.rank * ngpus_per_node + gpu
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
+    '''
     # weight init
     def weights_init(m):
         classname = m.__class__.__name__
@@ -114,43 +116,52 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # import network
     
-    gen_net = Generator(
-        seq_len=24, 
-        patch_size=3, 
-        channels=6, 
-        num_classes=2, 
-        latent_dim=100, 
-        embed_dim=10, 
-        depth=3,
-        num_heads=5, 
-        forward_drop_rate=0.5, 
-        attn_drop_rate=0.5
-    )
-    print(gen_net)
-    dis_net = Discriminator(
-        in_channels=6,
-        patch_size=3,
-        emb_size=50, 
-        seq_length = 24,
-        depth=3, 
-        n_classes=1, 
-    )
-    print(dis_net)
+    # gen_net = Generator(
+    #     seq_len=24, 
+    #     patch_size=3, 
+    #     channels=6, 
+    #     num_classes=2, 
+    #     latent_dim=100, 
+    #     embed_dim=10, 
+    #     depth=3,
+    #     num_heads=5, 
+    #     forward_drop_rate=0.5, 
+    #     attn_drop_rate=0.5
+    # )
+    # print(gen_net)
+    # dis_net = Discriminator(
+    #     in_channels=6,
+    #     patch_size=3,
+    #     emb_size=50, 
+    #     seq_length = 24,
+    #     depth=3, 
+    #     n_classes=1, 
+    # )
+    # print(dis_net)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
+    elif gpu is not None:
+        torch.cuda.set_device(gpu)
+        gen_net.cuda(gpu)
+        dis_net.cuda(gpu)
+    else:
+        gen_net = torch.nn.DataParallel(gen_net).cuda()
+        dis_net = torch.nn.DataParallel(dis_net).cuda()
+    print(dis_net) if args.rank == 0 else 0
+    '''
     elif args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
         # should always set the single device scope, otherwise,
         # DistributedDataParallel will use all available devices.
-        if args.gpu is not None:
-            torch.cuda.set_device(args.gpu)
+        if gpu is not None:
+            torch.cuda.set_device(gpu)
 #             gen_net = eval('models_search.'+args.gen_model+'.Generator')(args=args)
 #             dis_net = eval('models_search.'+args.dis_model+'.Discriminator')(args=args)
 
             gen_net.apply(weights_init)
             dis_net.apply(weights_init)
-            gen_net.cuda(args.gpu)
-            dis_net.cuda(args.gpu)
+            gen_net.cuda(gpu)
+            dis_net.cuda(gpu)
             # When using a single GPU per process and per
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
@@ -159,8 +170,8 @@ def main_worker(gpu, ngpus_per_node, args):
             args.batch_size = args.dis_batch_size
             
             args.num_workers = int((args.num_workers + ngpus_per_node - 1) / ngpus_per_node)
-            gen_net = torch.nn.parallel.DistributedDataParallel(gen_net, device_ids=[args.gpu], find_unused_parameters=True)
-            dis_net = torch.nn.parallel.DistributedDataParallel(dis_net, device_ids=[args.gpu], find_unused_parameters=True)
+            gen_net = torch.nn.parallel.DistributedDataParallel(gen_net, device_ids=[gpu], find_unused_parameters=True)
+            dis_net = torch.nn.parallel.DistributedDataParallel(dis_net, device_ids=[gpu], find_unused_parameters=True)
         else:
             gen_net.cuda()
             dis_net.cuda()
@@ -168,14 +179,8 @@ def main_worker(gpu, ngpus_per_node, args):
             # available GPUs if device_ids are not set
             gen_net = torch.nn.parallel.DistributedDataParallel(gen_net)
             dis_net = torch.nn.parallel.DistributedDataParallel(dis_net)
-    elif args.gpu is not None:
-        torch.cuda.set_device(args.gpu)
-        gen_net.cuda(args.gpu)
-        dis_net.cuda(args.gpu)
-    else:
-        gen_net = torch.nn.DataParallel(gen_net).cuda()
-        dis_net = torch.nn.DataParallel(dis_net).cuda()
-    print(dis_net) if args.rank == 0 else 0
+    '''
+    
         
 
     # set optimizer
@@ -203,7 +208,7 @@ def main_worker(gpu, ngpus_per_node, args):
 #     else:
 #         raise NotImplementedError(f'no fid stat for {args.dataset.lower()}')
 #     assert os.path.exists(fid_stat)
-
+    fid_stat = args.fid_stat
 
     # epoch number for dis_net
     args.max_epoch = args.max_epoch * args.n_critic
@@ -217,10 +222,9 @@ def main_worker(gpu, ngpus_per_node, args):
 #     test_loader = data.DataLoader(test_set, batch_size=args.dis_batch_size, num_workers=args.num_workers, shuffle=True)
     
     # train_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, verbose=True, is_normalize = True, one_hot_encode = False, data_mode = 'Train', single_class = True, class_name = args.class_name, augment_times=args.augment_times)
-    train_set = stock_dataset(file='/home/mia/Downloads/GitHub/RTSGAN/data/stock_dyn.pkl')
     train_loader = data.DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle = True)
     # test_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, is_normalize = True, one_hot_encode = False, data_mode = 'Test', single_class = True, class_name = args.class_name)
-    test_loader = data.DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle = True)
+    # test_loader = data.DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle = True)
     
     print(len(train_set))
     
@@ -272,7 +276,7 @@ def main_worker(gpu, ngpus_per_node, args):
         assert args.exp_name
         if args.rank == 0:
             args.path_helper = set_log_dir('logs', args.exp_name)
-            logger = create_logger(args.path_helper['log_path'])
+            # logger = create_logger(args.path_helper['log_path'])
             writer = SummaryWriter(args.path_helper['log_path'])
     
     if args.rank == 0:

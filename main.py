@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore")
 
 # 1. TimeGAN model
 from timegan import timegan
+
 # ====================== RTSGAN ===================================
 from models.aegan import AeGAN
 from utils import init_logger
@@ -94,9 +95,7 @@ def main (args):
   
   # define model architecture 
   if args.model == 'rtsgan':
-    aegan = AeGAN((static_processor, dynamic_processor), params)
-  elif args.model == 'timegan':
-    timegan = timegan(ori_data, params)   
+    aegan = AeGAN((static_processor, dynamic_processor), params)  
   elif args.model == 'doublegan':
     config = DGANConfig(
      max_sequence_len=args.seq_len,
@@ -139,8 +138,9 @@ def main (args):
   elif args.model == 'timegan':
     generated_data = timegan(dataset, params)
   elif args.model == 'doublegan':
-    dgan.internal_train(dataset)
-    _, generated_data = dgan.generate(len(train_set))
+    dgan.train_numpy(dataset)
+    _, generated_data = dgan.generate_numpy(len(ori_data))
+    generated_data = [np.array(data) for data in generated_data]
   elif args.model == 'ttsgan':
     pass
   
