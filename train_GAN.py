@@ -93,23 +93,23 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
     def weights_init(m):
         classname = m.__class__.__name__
         if classname.find('Conv2d') != -1:
-            if args.init_type == 'normal':
+            if args.tts_init_type == 'normal':
                 nn.init.normal_(m.weight.data, 0.0, 0.02)
-            elif args.init_type == 'orth':
+            elif args.tts_init_type == 'orth':
                 nn.init.orthogonal_(m.weight.data)
-            elif args.init_type == 'xavier_uniform':
+            elif args.tts_init_type == 'xavier_uniform':
                 nn.init.xavier_uniform(m.weight.data, 1.)
             else:
-                raise NotImplementedError('{} unknown inital type'.format(args.init_type))
+                raise NotImplementedError('{} unknown inital type'.format(args.tts_init_type))
 #         elif classname.find('Linear') != -1:
-#             if args.init_type == 'normal':
+#             if args.tts_init_type == 'normal':
 #                 nn.init.normal_(m.weight.data, 0.0, 0.02)
-#             elif args.init_type == 'orth':
+#             elif args.tts_init_type == 'orth':
 #                 nn.init.orthogonal_(m.weight.data)
-#             elif args.init_type == 'xavier_uniform':
+#             elif args.tts_init_type == 'xavier_uniform':
 #                 nn.init.xavier_uniform(m.weight.data, 1.)
 #             else:
-#                 raise NotImplementedError('{} unknown inital type'.format(args.init_type))
+#                 raise NotImplementedError('{} unknown inital type'.format(args.tts_init_type))
         elif classname.find('BatchNorm2d') != -1:
             nn.init.normal_(m.weight.data, 1.0, 0.02)
             nn.init.constant_(m.bias.data, 0.0)
@@ -184,55 +184,55 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
         
 
     # set optimizer
-    if args.optimizer == "adam":
+    if args.tts_optimizer == "adam":
         gen_optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, gen_net.parameters()),
-                                        args.g_lr, (args.beta1, args.beta2))
+                                        args.tts_g_lr, (args.tts_beta1, args.tts_beta2))
         dis_optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, dis_net.parameters()),
-                                        args.d_lr, (args.beta1, args.beta2))
-    elif args.optimizer == "adamw":
+                                        args.tts_d_lr, (args.tts_beta1, args.tts_beta2))
+    elif args.tts_optimizer == "adamw":
         gen_optimizer = AdamW(filter(lambda p: p.requires_grad, gen_net.parameters()),
-                                        args.g_lr, weight_decay=args.wd)
+                                        args.tts_g_lr, weight_decay=args.tts_wd)
         dis_optimizer = AdamW(filter(lambda p: p.requires_grad, dis_net.parameters()),
-                                         args.g_lr, weight_decay=args.wd)
+                                         args.tts_g_lr, weight_decay=args.tts_wd)
         
-    gen_scheduler = LinearLrDecay(gen_optimizer, args.g_lr, 0.0, 0, args.max_iter * args.n_critic)
-    dis_scheduler = LinearLrDecay(dis_optimizer, args.d_lr, 0.0, 0, args.max_iter * args.n_critic)
+    gen_scheduler = LinearLrDecay(gen_optimizer, args.tts_g_lr, 0.0, 0, args.tts_max_iter * args.tts_n_critic)
+    dis_scheduler = LinearLrDecay(dis_optimizer, args.tts_d_lr, 0.0, 0, args.tts_max_iter * args.tts_n_critic)
 
     # fid stat 
-#     if args.dataset.lower() == 'cifar10':
+#     if args.tts_dataset.lower() == 'cifar10':
 #         fid_stat = 'fid_stat/fid_stats_cifar10_train.npz'
-#     elif args.dataset.lower() == 'stl10':
+#     elif args.tts_dataset.lower() == 'stl10':
 #         fid_stat = 'fid_stat/stl10_train_unlabeled_fid_stats_48.npz'
-#     elif args.fid_stat is not None:
-#         fid_stat = args.fid_stat
+#     elif args.tts_fid_stat is not None:
+#         fid_stat = args.tts_fid_stat
 #     else:
-#         raise NotImplementedError(f'no fid stat for {args.dataset.lower()}')
+#         raise NotImplementedError(f'no fid stat for {args.tts_dataset.lower()}')
 #     assert os.path.exists(fid_stat)
-    fid_stat = args.fid_stat
+    fid_stat = args.tts_fid_stat
 
     # epoch number for dis_net
-    args.max_epoch = args.max_epoch * args.n_critic
+    args.tts_max_epoch = args.tts_max_epoch * args.tts_n_critic
 #     dataset = datasets.ImageDataset(args, cur_img_size=8)
 #     train_loader = dataset.train
 #     train_sampler = dataset.train_sampler
     
 #     train_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, one_hot_encode = False, data_mode = 'Train')
 #     test_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, one_hot_encode = False, data_mode = 'Test')
-#     train_loader = data.DataLoader(train_set, batch_size=args.dis_batch_size, num_workers=args.num_workers, shuffle=True)
-#     test_loader = data.DataLoader(test_set, batch_size=args.dis_batch_size, num_workers=args.num_workers, shuffle=True)
+#     train_loader = data.DataLoader(train_set, batch_size=args.tts_dis_batch_size, num_workers=args.tts_num_workers, shuffle=True)
+#     test_loader = data.DataLoader(test_set, batch_size=args.tts_dis_batch_size, num_workers=args.tts_num_workers, shuffle=True)
     
-    # train_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, verbose=True, is_normalize = True, one_hot_encode = False, data_mode = 'Train', single_class = True, class_name = args.class_name, augment_times=args.augment_times)
+    # train_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, verbose=True, is_normalize = True, one_hot_encode = False, data_mode = 'Train', single_class = True, class_name = args.tts_class_name, augment_times=args.tts_augment_times)
     train_loader = data.DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle = True)
     # test_set = unimib_load_dataset(incl_xyz_accel = True, incl_rms_accel = False, incl_val_group = False, is_normalize = True, one_hot_encode = False, data_mode = 'Test', single_class = True, class_name = args.class_name)
     # test_loader = data.DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle = True)
     
     print(len(train_set))
     
-    if args.max_iter:
-        args.max_epoch = np.ceil(args.max_iter * args.n_critic / len(train_loader))
+    if args.tts_max_iter:
+        args.tts_max_epoch = np.ceil(args.tts_max_iter * args.tts_n_critic / len(train_loader))
 
     # initial
-    fixed_z = torch.cuda.FloatTensor(np.random.normal(0, 1, (100, args.latent_dim)))
+    fixed_z = torch.cuda.FloatTensor(np.random.normal(0, 1, (100, args.tts_latent_dim)))
     avg_gen_net = deepcopy(gen_net).cpu()
     gen_avg_param = copy_params(avg_gen_net)
     del avg_gen_net
@@ -241,12 +241,12 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
 
     # set writer
     writer = None
-    if args.load_path:
-        print(f'=> resuming from {args.load_path}')
-        assert os.path.exists(args.load_path)
-        checkpoint_file = os.path.join(args.load_path)
+    if args.tts_load_path:
+        print(f'=> resuming from {args.tts_load_path}')
+        assert os.path.exists(args.tts_load_path)
+        checkpoint_file = os.path.join(args.tts_load_path)
         assert os.path.exists(checkpoint_file)
-        loc = 'cuda:{}'.format(args.gpu)
+        loc = 'cuda:{}'.format(args.tts_gpu)
         checkpoint = torch.load(checkpoint_file, map_location=loc)
         start_epoch = checkpoint['epoch']
         best_fid = checkpoint['best_fid']
@@ -262,38 +262,38 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
         gen_net.load_state_dict(checkpoint['gen_state_dict'])
         fixed_z = checkpoint['fixed_z']
 #         del avg_gen_net
-#         gen_avg_param = list(p.cuda().to(f"cuda:{args.gpu}") for p in gen_avg_param)
+#         gen_avg_param = list(p.cuda().to(f"cuda:{args.tts_gpu}") for p in gen_avg_param)
         
         
 
-        args.path_helper = checkpoint['path_helper']
-        logger = create_logger(args.path_helper['log_path']) if args.rank == 0 else None
+        args.tts_path_helper = checkpoint['path_helper']
+        logger = create_logger(args.tts_path_helper['log_path']) if args.rank == 0 else None
         print(f'=> loaded checkpoint {checkpoint_file} (epoch {start_epoch})')
-        writer = SummaryWriter(args.path_helper['log_path']) if args.rank == 0 else None
+        writer = SummaryWriter(args.tts_path_helper['log_path']) if args.rank == 0 else None
         del checkpoint
     else:
     # create new log dir
-        assert args.exp_name
+        assert args.tts_exp_name
         if args.rank == 0:
-            args.path_helper = set_log_dir('logs', args.exp_name)
-            # logger = create_logger(args.path_helper['log_path'])
-            writer = SummaryWriter(args.path_helper['log_path'])
+            args.tts_path_helper = set_log_dir('logs', args.tts_exp_name)
+            # logger = create_logger(args.tts_path_helper['log_path'])
+            writer = SummaryWriter(args.tts_path_helper['log_path'])
     
     if args.rank == 0:
         logger.info(args)
     writer_dict = {
         'writer': writer,
         'train_global_steps': start_epoch * len(train_loader),
-        'valid_global_steps': start_epoch // args.val_freq,
+        'valid_global_steps': start_epoch // args.tts_val_freq,
     }
 
     # train loop
-    for epoch in range(int(start_epoch), int(args.max_epoch)):
+    for epoch in range(int(start_epoch), int(args.tts_max_epoch)):
 #         train_sampler.set_epoch(epoch)
-        lr_schedulers = (gen_scheduler, dis_scheduler) if args.lr_decay else None
+        lr_schedulers = (gen_scheduler, dis_scheduler) if args.tts_lr_decay else None
         cur_stage = cur_stages(epoch, args)
         print("cur_stage " + str(cur_stage)) if args.rank==0 else 0
-        print(f"path: {args.path_helper['prefix']}") if args.rank==0 else 0
+        print(f"path: {args.tts_path_helper['prefix']}") if args.rank==0 else 0
         
 #         if (epoch+1) % 3 == 0:
 #             # train discriminator and generator both 
@@ -303,18 +303,18 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
 #             train_d(args, gen_net, dis_net, dis_optimizer, train_loader, epoch, writer_dict,fixed_z, lr_schedulers)
         train(args, gen_net, dis_net, gen_optimizer, dis_optimizer, gen_avg_param, train_loader, epoch, writer_dict,fixed_z, lr_schedulers)
         
-        if args.rank == 0 and args.show:
+        if args.rank == 0 and args.tts_show:
             backup_param = copy_params(gen_net)
             load_params(gen_net, gen_avg_param, args, mode="cpu")
             save_samples(args, fixed_z, fid_stat, epoch, gen_net, writer_dict)
             load_params(gen_net, backup_param, args)
             
         #fid_stat is not defined  It doesn't make sense to use image evaluate matrics
-#         if epoch and epoch % args.val_freq == 0 or epoch == int(args.max_epoch)-1:
+#         if epoch and epoch % args.tts_val_freq == 0 or epoch == int(args.tts_max_epoch)-1:
 #             backup_param = copy_params(gen_net)
 #             load_params(gen_net, gen_avg_param, args, mode="cpu")
 #             inception_score, fid_score = validate(args, fixed_z, fid_stat, epoch, gen_net, writer_dict)
-#             if args.rank==0:
+#             if args.tts_rank==0:
 #                 logger.info(f'Inception score: {inception_score}, FID score: {fid_score} || @ epoch {epoch}.')
 #             load_params(gen_net, backup_param, args)
 #             if fid_score < best_fid:
@@ -329,7 +329,7 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
         #Plot synthetic data every 5 epochs    
 #         if epoch and epoch % 1 == 0:
         gen_net.eval()
-        plot_buf = gen_plot(gen_net, epoch, args.class_name)
+        plot_buf = gen_plot(gen_net, epoch, args.tts_class_name)
         image = PIL.Image.open(plot_buf)
         image = ToTensor()(image).unsqueeze(0)
         #writer = SummaryWriter(comment='synthetic signals')
@@ -338,22 +338,22 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
         is_best = False
         avg_gen_net = deepcopy(gen_net)
         load_params(avg_gen_net, gen_avg_param, args)
-#         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
-#                 and args.rank == 0):
+#         if not args.tts_multiprocessing_distributed or (args.tts_multiprocessing_distributed
+#                 and args.tts_rank == 0):
 # Add module in model saving code exp'gen_net.module.state_dict()' to solve the model loading unpaired name problem
         save_checkpoint({
             'epoch': epoch + 1,
-            'gen_model': args.gen_model,
-            'dis_model': args.dis_model,
+            'gen_model': args.tts_gen_model,
+            'dis_model': args.tts_dis_model,
             'gen_state_dict': gen_net.module.state_dict(),
             'dis_state_dict': dis_net.module.state_dict(),
             'avg_gen_state_dict': avg_gen_net.module.state_dict(),
             'gen_optimizer': gen_optimizer.state_dict(),
             'dis_optimizer': dis_optimizer.state_dict(),
             'best_fid': best_fid,
-            'path_helper': args.path_helper,
+            'path_helper': args.tts_path_helper,
             'fixed_z': fixed_z
-        }, is_best, args.path_helper['ckpt_path'], filename="checkpoint")
+        }, is_best, args.tts_path_helper['ckpt_path'], filename="checkpoint")
         del avg_gen_net
         
 def gen_plot(gen_net, epoch, class_name):

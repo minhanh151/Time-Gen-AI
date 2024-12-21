@@ -3,7 +3,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
+# import argparse
+from config.config import parse_args
 import numpy as np
 import torch 
 import warnings
@@ -30,7 +31,7 @@ from metrics.discriminative_metrics import discriminative_score_metrics
 from metrics.predictive_metrics import predictive_score_metrics
 from metrics.visualization_metrics import visualization
 
-# from functions import train
+from train_GAN import main_worker
 
 def main (args):
   """Main function for timeGAN experiments.
@@ -142,7 +143,7 @@ def main (args):
     _, generated_data = dgan.generate_numpy(len(ori_data))
     generated_data = [np.array(data) for data in generated_data]
   elif args.model == 'ttsgan':
-    pass
+    main_worker(gen_net, dis_net, train_set, args.device, args)
   
 
   '''
@@ -184,90 +185,8 @@ def main (args):
 
 if __name__ == '__main__':  
   
-  # Inputs for the main function
-  parser = argparse.ArgumentParser()
-  parser.add_argument(
-      '--data_name',
-      choices=['sine','stock','energy'],
-      default='stock',
-      type=str)
-  parser.add_argument(
-      '--data_path',
-      default='./data',
-      type=str
-  )
-  parser.add_argument(
-      '--seq_len',
-      help='sequence length',
-      default=24,
-      type=int)
-  parser.add_argument(
-      '--sample_len',
-      help='sample length',
-      default=4,
-      type=int)
-  parser.add_argument(
-      '--module',
-      choices=['gru','lstm','lstmLN'],
-      default='gru',
-      type=str)
-  parser.add_argument(
-      '--hidden_dim',
-      help='hidden state dimensions (should be optimized)',
-      default=24,
-      type=int)
-  parser.add_argument(
-      '--device',
-      help='device',
-      default=0,
-      type=int)
-  parser.add_argument(
-      '--num_layer',
-      help='number of layers (should be optimized)',
-      default=3,
-      type=int)
-  parser.add_argument(
-      '--iteration',
-      help='Training iterations (should be optimized)',
-      default=50000,
-      type=int)
-  parser.add_argument("--rts_epochs", default=1000, dest="epochs", type=int,
-                    help="Number of full passes through training set for autoencoder (only for rtsgan and dgan)")
-  parser.add_argument("--d-update", default=5, dest="d_update", type=int,
-                    help="discriminator updates per generator update")
-  parser.add_argument(
-      '--batch_size',
-      help='the number of samples in mini-batch (should be optimized)',
-      default=128,
-      type=int)
-  parser.add_argument("--gan-batch-size", default=512, dest="gan_batch_size", type=int,
-                    help="Minibatch size for WGAN")
-  parser.add_argument(
-      '--metric_iteration',
-      help='iterations of the metric computation',
-      default=10,
-      type=int)
-  parser.add_argument(
-      '--model',
-      help='',
-      required=True,
-      type=str)
-  parser.add_argument("--log-dir", default="../stock_result", dest="log_dir",
-                    help="Directory where to write logs / serialized models")
-  parser.add_argument("--embed-dim", default=96, dest="embed_dim", type=int, help="dim of hidden state")
-  parser.add_argument("--hidden-dim", default=24, dest="hidden_dim", type=int, help="dim of GRU hidden state")
-  parser.add_argument("--layers", default=3, dest="layers", type=int, help="layers")
-  parser.add_argument("--ae-lr", default=1e-3, dest="ae_lr", type=float, help="autoencoder learning rate")
-  parser.add_argument("--weight-decay", default=0, dest="weight_decay", type=float, help="weight decay")
-  parser.add_argument("--scale", default=1, dest="scale", type=float, help="scale")
-  parser.add_argument("--dropout", default=0.0, dest="dropout", type=float,
-                    help="Amount of dropout(not keep rate, but drop rate) to apply to embeddings part of graph")
-  parser.add_argument("--gan-lr", default=1e-4, dest="gan_lr", type=float, help="WGAN learning rate")
-  parser.add_argument("--gan-alpha", default=0.99, dest="gan_alpha", type=float, help="for RMSprop")
-  parser.add_argument("--noise-dim", default=96, dest="noise_dim", type=int, help="dim of WGAN noise state")
-  parser.add_argument("--ae-batch-size", default=128, dest="ae_batch_size", type=int,
-                    help="Minibatch size for autoencoder")
-  args = parser.parse_args() 
+  
+  args = parse_args() 
   
   # Calls main function  
   ori_data, generated_data, metrics = main(args)
