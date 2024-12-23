@@ -31,7 +31,7 @@ def parse_args():
         default=24, type=int)
     parser.add_argument(
         '--sample_len', help='sample length',
-        default=4, type=int)
+        default=6, type=int)
     
     # training 
     parser.add_argument(
@@ -168,7 +168,7 @@ def parse_args():
     parser.add_argument(
     '--tts_latent_dim',
     type=int,
-    default=128,
+    default=100,
     help='dimensionality of the latent space')
     parser.add_argument(
     '--tts_img_size',
@@ -200,6 +200,10 @@ def parse_args():
     type=str,
     help='The reload model path')
     parser.add_argument(
+        '--tts_class_name',
+        type=str,
+        help='The class name to load in UniMiB dataset')
+    parser.add_argument(
     '--tts_augment_times',
     type=int,
     default=None,
@@ -221,9 +225,9 @@ def parse_args():
     parser.add_argument('--tts_init_type', type=str, default='normal',
                     choices=['normal', 'orth', 'xavier_uniform', 'false'],
                     help='The init type')
-    parser.add_argument('--tts_gf_dim', type=int, default=64,
+    parser.add_argument('--tts_gf_dim', type=int, default=1024,
                     help='The base channel num of gen')
-    parser.add_argument('--tts_df_dim', type=int, default=64,
+    parser.add_argument('--tts_df_dim', type=int, default=384,
                     help='The base channel num of disc')
     parser.add_argument(
     '--tts_gen_model',
@@ -292,7 +296,7 @@ def parse_args():
                     help='downsampling type')
     parser.add_argument('--tts_fade_in', type=float, default=1,
                     help='fade in step')
-    parser.add_argument('--tts_d_depth', type=int, default=7,
+    parser.add_argument('--tts_d_depth', type=int, default=3,
                     help='Discriminator Depth')
     parser.add_argument('--tts_g_depth', type=str, default="5,4,2",
                     help='Generator Depth')
@@ -304,7 +308,7 @@ def parse_args():
                     help='Generator activation Layer')
     parser.add_argument('--tts_d_act', type=str, default="gelu",
                     help='Discriminator activation layer')
-    parser.add_argument('--tts_patch_size', type=int, default=4,
+    parser.add_argument('--tts_patch_size', type=int, default=2,
                     help='Discriminator Depth')
     parser.add_argument('--tts_fid_stat', type=str, default="None",
                     help='Discriminator Depth')

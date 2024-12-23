@@ -289,20 +289,20 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
         # -----------------
         #  Train Generator
         # -----------------
-        if global_steps % (args.tts_n_critic * args.accumulated_times) == 0:
+        if global_steps % (args.tts_n_critic * args.tts_accumulated_times) == 0:
             
-            for accumulated_idx in range(args.g_accumulated_times):
-                gen_z = torch.cuda.FloatTensor(np.random.normal(0, 1, (args.gen_batch_size, args.latent_dim)))
+            for accumulated_idx in range(args.tts_g_accumulated_times):
+                gen_z = torch.cuda.FloatTensor(np.random.normal(0, 1, (args.tts_gen_batch_size, args.tts_latent_dim)))
                 gen_imgs = gen_net(gen_z)
                 fake_validity = dis_net(gen_imgs)
 
                 # cal loss
                 loss_lz = torch.tensor(0)
-                if args.loss == "standard":
-                    real_label = torch.full((args.gen_batch_size,), 1., dtype=torch.float, device=real_imgs.get_device())
+                if args.tts_loss == "standard":
+                    real_label = torch.full((args.tts_gen_batch_size,), 1., dtype=torch.float, device=real_imgs.get_device())
                     fake_validity = nn.Sigmoid()(fake_validity.view(-1))
                     g_loss = nn.BCELoss()(fake_validity.view(-1), real_label)
-                if args.loss == "lsgan":
+                if args.tts_loss == "lsgan":
                     if isinstance(fake_validity, list):
                         g_loss = 0
                         for fake_validity_item in fake_validity:
@@ -312,9 +312,9 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
                         real_label = torch.full((fake_validity.shape[0],fake_validity.shape[1]), 1., dtype=torch.float, device=real_imgs.get_device())
                         # fake_validity = nn.Sigmoid()(fake_validity.view(-1))
                         g_loss = nn.MSELoss()(fake_validity, real_label)
-                elif args.loss == 'wgangp-mode':
-                    fake_image1, fake_image2 = gen_imgs[:args.gen_batch_size//2], gen_imgs[args.gen_batch_size//2:]
-                    z_random1, z_random2 = gen_z[:args.gen_batch_size//2], gen_z[args.gen_batch_size//2:]
+                elif args.tts_loss == 'wgangp-mode':
+                    fake_image1, fake_image2 = gen_imgs[:args.tts_gen_batch_size//2], gen_imgs[args.tts_gen_batch_size//2:]
+                    z_random1, z_random2 = gen_z[:args.tts_gen_batch_size//2], gen_z[args.tts_gen_batch_size//2:]
                     lz = torch.mean(torch.abs(fake_image2 - fake_image1)) / torch.mean(
                     torch.abs(z_random2 - z_random1))
                     eps = 1 * 1e-5
@@ -323,7 +323,7 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
                     g_loss = -torch.mean(fake_validity) + loss_lz
                 else:
                     g_loss = -torch.mean(fake_validity)
-                g_loss = g_loss/float(args.g_accumulated_times)
+                g_loss = g_loss/float(args.tts_g_accumulated_times)
                 g_loss.backward()
             
             torch.nn.utils.clip_grad_norm_(gen_net.parameters(), 5.)
@@ -339,13 +339,13 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
                 writer.add_scalar('LR/d_lr', d_lr, global_steps)
 
             # moving average weight
-            ema_nimg = args.ema_kimg * 1000
-            cur_nimg = args.dis_batch_size * args.world_size * global_steps
-            if args.ema_warmup != 0:
-                ema_nimg = min(ema_nimg, cur_nimg * args.ema_warmup)
-                ema_beta = 0.5 ** (float(args.dis_batch_size * args.world_size) / max(ema_nimg, 1e-8))
+            ema_nimg = args.tts_ema_kimg * 1000
+            cur_nimg = args.tts_dis_batch_size * args.world_size * global_steps
+            if args.tts_ema_warmup != 0:
+                ema_nimg = min(ema_nimg, cur_nimg * args.tts_ema_warmup)
+                ema_beta = 0.5 ** (float(args.tts_dis_batch_size * args.world_size) / max(ema_nimg, 1e-8))
             else:
-                ema_beta = args.ema
+                ema_beta = args.tts_ema
                 
             # moving average weight
             for p, avg_p in zip(gen_net.parameters(), gen_avg_param):
@@ -357,16 +357,16 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
             gen_step += 1
 
         # verbose
-        if gen_step and iter_idx % args.print_freq == 0 and args.rank == 0:
+        if gen_step and iter_idx % args.tts_print_freq == 0 and args.rank == 0:
             sample_imgs = torch.cat((gen_imgs[:16], real_imgs[:16]), dim=0)
 #             scale_factor = args.img_size // int(sample_imgs.size(3))
 #             sample_imgs = torch.nn.functional.interpolate(sample_imgs, scale_factor=2)
 #             img_grid = make_grid(sample_imgs, nrow=4, normalize=True, scale_each=True)
 #             save_image(sample_imgs, f'sampled_images_{args.exp_name}.jpg', nrow=4, normalize=True, scale_each=True)
-            # writer.add_image(f'sampled_images_{args.exp_name}', img_grid, global_steps)
+            # writer.add_image(f'sampled_images_{args.ttsexp_name}', img_grid, global_steps)
             tqdm.write(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f] [ema: %f] " %
-                (epoch, args.max_epoch, iter_idx % len(train_loader), len(train_loader), d_loss.item(), g_loss.item(), ema_beta))
+                (epoch, args.ttsmax_epoch, iter_idx % len(train_loader), len(train_loader), d_loss.item(), g_loss.item(), ema_beta))
             del gen_imgs
             del real_imgs
             del fake_validity
@@ -392,10 +392,10 @@ def get_is(args, gen_net: nn.Module, num_img):
     # eval mode
     gen_net = gen_net.eval()
 
-    eval_iter = num_img // args.eval_batch_size
+    eval_iter = num_img // args.ttseval_batch_size
     img_list = list()
     for _ in range(eval_iter):
-        z = torch.cuda.FloatTensor(np.random.normal(0, 1, (args.eval_batch_size, args.latent_dim)))
+        z = torch.cuda.FloatTensor(np.random.normal(0, 1, (args.ttseval_batch_size, args.ttslatent_dim)))
 
         # Generate a batch of images
         gen_imgs = gen_net(z).mul_(127.5).add_(127.5).clamp_(0.0, 255.0).permute(0, 2, 3, 1).to('cpu',

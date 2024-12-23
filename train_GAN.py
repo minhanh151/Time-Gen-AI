@@ -7,6 +7,7 @@ from __future__ import print_function
 # import datasets
 # from data_load import *
 from models.GANModels import * 
+from utils import save_checkpoint
 from functions import train, train_d, validate, save_samples, LinearLrDecay, load_params, copy_params, cur_stages
 # from utils.utils import set_log_dir, save_checkpoint, create_logger
 # from utils.inception_score import _init_inception
@@ -89,6 +90,7 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     '''
+    args.tts_path_helper = './'
     # weight init
     def weights_init(m):
         classname = m.__class__.__name__
@@ -334,7 +336,7 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
         image = PIL.Image.open(plot_buf)
         image = ToTensor()(image).unsqueeze(0)
         #writer = SummaryWriter(comment='synthetic signals')
-        writer.add_image('Image', image[0], epoch)
+        # writer.add_image('Image', image[0], epoch)
         
         is_best = False
         avg_gen_net = deepcopy(gen_net)
@@ -346,9 +348,9 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
             'epoch': epoch + 1,
             'gen_model': args.tts_gen_model,
             'dis_model': args.tts_dis_model,
-            'gen_state_dict': gen_net.module.state_dict(),
-            'dis_state_dict': dis_net.module.state_dict(),
-            'avg_gen_state_dict': avg_gen_net.module.state_dict(),
+            'gen_state_dict': gen_net.state_dict(),
+            'dis_state_dict': dis_net.state_dict(),
+            'avg_gen_state_dict': avg_gen_net.state_dict(),
             'gen_optimizer': gen_optimizer.state_dict(),
             'dis_optimizer': dis_optimizer.state_dict(),
             'best_fid': best_fid,
@@ -362,7 +364,7 @@ def gen_plot(gen_net, epoch, class_name):
     synthetic_data = [] 
 
     for i in range(10):
-        fake_noise = torch.FloatTensor(np.random.normal(0, 1, (1, 100)))
+        fake_noise = torch.FloatTensor(np.random.normal(0, 1, (1, 100))).cuda()
         fake_sigs = gen_net(fake_noise).to('cpu').detach().numpy()
         synthetic_data.append(fake_sigs)
 

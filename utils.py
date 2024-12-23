@@ -31,6 +31,7 @@ import codecs
 import numpy as np
 import logging 
 import tensorflow_addons as tfa
+import torch
 def train_test_divide (data_x, data_x_hat, data_t, data_t_hat, train_rate = 0.8):
   """Divide train and test data for both original and synthetic data.
   
@@ -65,7 +66,11 @@ def train_test_divide (data_x, data_x_hat, data_t, data_t_hat, train_rate = 0.8)
   
   return train_x, train_x_hat, test_x, test_x_hat, train_t, train_t_hat, test_t, test_t_hat
 
-
+def save_checkpoint(states, is_best, output_dir,
+                    filename='checkpoint.pth'):
+    torch.save(states, os.path.join(output_dir, filename))
+    if is_best:
+        torch.save(states, os.path.join(output_dir, 'checkpoint_best.pth'))
 def extract_time (data):
   """Returns Maximum sequence length and each sequence length.
   
