@@ -86,7 +86,7 @@ def main (args):
   
   params['module'] = args.module
   params['hidden_dim'] = args.hidden_dim
-  params['num_layer'] = args.num_layer
+  params['num_layer'] = args.timegan_num_layer
   params['iterations'] = args.iteration
   params['batch_size'] = args.batch_size
   
@@ -122,8 +122,8 @@ def main (args):
     dis_net = Discriminator(
         in_channels=args.sample_len,
         patch_size=3,
-        emb_size=50, 
-        seq_length = 24,
+        emb_size=10, 
+        seq_length = args.seq_len,
         depth=3, 
         n_classes=1, 
     )
@@ -143,7 +143,7 @@ def main (args):
     _, generated_data = dgan.generate_numpy(len(ori_data))
     generated_data = [np.array(data) for data in generated_data]
   elif args.model == 'ttsgan':
-    main_worker(gen_net, dis_net, train_set, args.device, args)
+    main_worker(gen_net, dis_net, train_set, args.device, logger, args)
   
 
   '''

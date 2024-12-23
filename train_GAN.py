@@ -2,13 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import cfg
+# import cfg
 # import models_search
 # import datasets
-from dataLoader import *
-from GANModels import * 
+# from data_load import *
+from models.GANModels import * 
 from functions import train, train_d, validate, save_samples, LinearLrDecay, load_params, copy_params, cur_stages
-from utils.utils import set_log_dir, save_checkpoint, create_logger
+# from utils.utils import set_log_dir, save_checkpoint, create_logger
 # from utils.inception_score import _init_inception
 # from utils.fid_score import create_inception_graph, check_or_download_inception
 
@@ -194,7 +194,8 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
                                         args.tts_g_lr, weight_decay=args.tts_wd)
         dis_optimizer = AdamW(filter(lambda p: p.requires_grad, dis_net.parameters()),
                                          args.tts_g_lr, weight_decay=args.tts_wd)
-        
+
+    # print(gen_optimizer, args.tts_g_lr, args.tts_max_iter , args.tts_n_critic)
     gen_scheduler = LinearLrDecay(gen_optimizer, args.tts_g_lr, 0.0, 0, args.tts_max_iter * args.tts_n_critic)
     dis_scheduler = LinearLrDecay(dis_optimizer, args.tts_d_lr, 0.0, 0, args.tts_max_iter * args.tts_n_critic)
 
@@ -274,10 +275,10 @@ def main_worker(gen_net, dis_net, train_set, gpu, logger, args):
     else:
     # create new log dir
         assert args.tts_exp_name
-        if args.rank == 0:
-            args.tts_path_helper = set_log_dir('logs', args.tts_exp_name)
-            # logger = create_logger(args.tts_path_helper['log_path'])
-            writer = SummaryWriter(args.tts_path_helper['log_path'])
+        # if args.rank == 0:
+        #     args.tts_path_helper = set_log_dir('logs', args.tts_exp_name)
+        #     # logger = create_logger(args.tts_path_helper['log_path'])
+        #     writer = SummaryWriter(args.tts_path_helper['log_path'])
     
     if args.rank == 0:
         logger.info(args)

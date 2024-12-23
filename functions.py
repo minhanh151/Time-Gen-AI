@@ -18,7 +18,7 @@ from tqdm import tqdm
 import cv2
 
 # from utils.fid_score import calculate_fid_given_paths
-from utils.torch_fid_score import get_fid
+# from utils.torch_fid_score import get_fid
 # from utils.inception_score import get_inception_scorepython exps/dist1_new_church256.py --node 0022 --rank 0sample
 
 logger = logging.getLogger(__name__)
@@ -40,8 +40,8 @@ def cur_stages(iter, args):
         #         return idx
         # return len(args.grow_steps)
         idx = 0
-        for i in range(len(args.grow_steps)):
-            if iter >= args.grow_steps[i]:
+        for i in range(len(args.tts_grow_steps)):
+            if iter >= args.tts_grow_steps[i]:
                 idx = i+1
         return idx
 
@@ -215,10 +215,10 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
         
 
         # Adversarial ground truths
-        real_imgs = imgs.type(torch.cuda.FloatTensor).cuda(args.gpu, non_blocking=True)
+        real_imgs = imgs.type(torch.cuda.FloatTensor).cuda(args.device, non_blocking=True)
 
         # Sample noise as generator input
-        z = torch.cuda.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], args.latent_dim))).cuda(args.gpu, non_blocking=True)
+        z = torch.cuda.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], args.tts_latent_dim))).cuda(args.device, non_blocking=True)
 
         # ---------------------
         #  Train Discriminator
@@ -233,11 +233,11 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
         fake_validity = dis_net(fake_imgs)
 
         # cal loss
-        if args.loss == 'hinge':
+        if args.tts_loss == 'hinge':
             d_loss = 0
             d_loss = torch.mean(nn.ReLU(inplace=True)(1.0 - real_validity)) + \
                     torch.mean(nn.ReLU(inplace=True)(1 + fake_validity))
-        elif args.loss == 'standard':
+        elif args.tts_loss == 'standard':
             #soft label
             real_label = torch.full((imgs.shape[0],), 0.9, dtype=torch.float, device=real_imgs.get_device())
             fake_label = torch.full((imgs.shape[0],), 0.1, dtype=torch.float, device=real_imgs.get_device())
@@ -246,7 +246,7 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
             d_real_loss = nn.BCELoss()(real_validity, real_label)
             d_fake_loss = nn.BCELoss()(fake_validity, fake_label)
             d_loss = d_real_loss + d_fake_loss
-        elif args.loss == 'lsgan':
+        elif args.tts_loss == 'lsgan':
             if isinstance(fake_validity, list):
                 d_loss = 0
                 for real_validity_item, fake_validity_item in zip(real_validity, fake_validity):
@@ -261,25 +261,25 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
                 d_real_loss = nn.MSELoss()(real_validity, real_label)
                 d_fake_loss = nn.MSELoss()(fake_validity, fake_label)
                 d_loss = d_real_loss + d_fake_loss
-        elif args.loss == 'wgangp':
-            gradient_penalty = compute_gradient_penalty(dis_net, real_imgs, fake_imgs.detach(), args.phi)
+        elif args.tts_loss == 'wgangp':
+            gradient_penalty = compute_gradient_penalty(dis_net, real_imgs, fake_imgs.detach(), args.tts_phi)
             d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + gradient_penalty * 10 / (
-                    args.phi ** 2)
-        elif args.loss == 'wgangp-mode':
-            gradient_penalty = compute_gradient_penalty(dis_net, real_imgs, fake_imgs.detach(), args.phi)
+                    args.tts_phi ** 2)
+        elif args.tts_loss == 'wgangp-mode':
+            gradient_penalty = compute_gradient_penalty(dis_net, real_imgs, fake_imgs.detach(), args.tts_phi)
             d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + gradient_penalty * 10 / (
-                    args.phi ** 2)
-        elif args.loss == 'wgangp-eps':
-            gradient_penalty = compute_gradient_penalty(dis_net, real_imgs, fake_imgs.detach(), args.phi)
+                    args.tts_phi ** 2)
+        elif args.tts_loss == 'wgangp-eps':
+            gradient_penalty = compute_gradient_penalty(dis_net, real_imgs, fake_imgs.detach(), args.tts_phi)
             d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + gradient_penalty * 10 / (
-                    args.phi ** 2)
+                    args.tts_phi ** 2)
             d_loss += (torch.mean(real_validity) ** 2) * 1e-3
         else:
-            raise NotImplementedError(args.loss)
-        d_loss = d_loss/float(args.accumulated_times)
+            raise NotImplementedError(args.tts_loss)
+        d_loss = d_loss/float(args.tts_accumulated_times)
         d_loss.backward()
         
-        if (iter_idx + 1) % args.accumulated_times == 0:
+        if (iter_idx + 1) % args.tts_accumulated_times == 0:
             torch.nn.utils.clip_grad_norm_(dis_net.parameters(), 5.)
             dis_optimizer.step()
             dis_optimizer.zero_grad()
@@ -289,7 +289,7 @@ def train(args, gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, dis_optim
         # -----------------
         #  Train Generator
         # -----------------
-        if global_steps % (args.n_critic * args.accumulated_times) == 0:
+        if global_steps % (args.tts_n_critic * args.accumulated_times) == 0:
             
             for accumulated_idx in range(args.g_accumulated_times):
                 gen_z = torch.cuda.FloatTensor(np.random.normal(0, 1, (args.gen_batch_size, args.latent_dim)))

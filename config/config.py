@@ -1,5 +1,14 @@
-  
+
 import argparse
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.') 
+
 def parse_args():
   # Inputs for the main function
     parser = argparse.ArgumentParser()
@@ -97,7 +106,7 @@ def parse_args():
     parser.add_argument(
     '--tts_max_iter',
     type=int,
-    default=None,
+    default=10,
     help='set the max iteration number')
     parser.add_argument(
     '-tts_gen_bs',
@@ -339,7 +348,8 @@ def parse_args():
       help='iterations of the metric computation',
       default=10,
       type=int)
-  
-  
+    
+    opt = parser.parse_args()
+    return opt
   
   
