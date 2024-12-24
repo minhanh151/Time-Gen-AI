@@ -14,8 +14,10 @@ using one synthetic dataset and two real-world datasets.
 + To train the model, simpy run:
 
     `
-      python main.py --model "model_name"
+      python main.py --model "model_name" --iteration 15000 
     `
+
+  + iteration: 15000 for rtsgan and 50000 for timegan 
 
 For example:
 `python main.py --model rtsgan`

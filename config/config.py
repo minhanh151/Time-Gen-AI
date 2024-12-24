@@ -73,14 +73,14 @@ def parse_args():
     parser.add_argument('-tts_dis_bs', '--tts_dis_batch_size', type=int, default=64, help='size of the batches')
 
     parser.add_argument('--tts_g_lr', type=float, default=0.0002, help='adam: gen learning rate')
-    parser.add_argument('--tts_wd', type=float, default=0, help='adamw: gen weight decay')
+    parser.add_argument('--tts_wd', type=float, default=1e-3, help='adamw: gen weight decay')
     parser.add_argument('--tts_d_lr', type=float, default=0.0002, help='adam: disc learning rate')
     
     # Training parameters
     parser.add_argument('--tts_ctrl_lr', type=float, default=3.5e-4, help='adam: ctrl learning rate')
     parser.add_argument('--tts_lr_decay', action='store_true', help='learning rate decay or not')
-    parser.add_argument('--tts_beta1', type=float, default=0.0, help='adam: decay of first order momentum of gradient')
-    parser.add_argument('--tts_beta2', type=float, default=0.9, help='adam: decay of first order momentum of gradient')
+    parser.add_argument('--tts_beta1', type=float, default=0.9, help='adam: decay of first order momentum of gradient')
+    parser.add_argument('--tts_beta2', type=float, default=0.999, help='adam: decay of first order momentum of gradient')
     parser.add_argument('--tts_optimizer', type=str, default="adam", help='optimizer')
     parser.add_argument('--tts_loss', type=str, default="hinge", help='loss function')
     parser.add_argument('--tts_phi', type=float, default=1, help='wgan-gp phi')
@@ -126,14 +126,14 @@ def parse_args():
     parser.add_argument('--tts_grow_steps', nargs='+', type=int, help='the vector of a discovered architecture')
     parser.add_argument('--tts_grow_step1', type=int, default=25, help='which iteration to grow the image size from 8 to 16')
     parser.add_argument('--tts_grow_step2', type=int, default=55, help='which iteration to grow the image size from 16 to 32')
-    parser.add_argument('--tts_fade_in', type=float, default=1, help='fade in step')
+    parser.add_argument('--tts_fade_in', type=float, default=0, help='fade in step')
     parser.add_argument('--tts_max_search_iter', type=int, default=90, help='max search iterations of this algorithm')
     parser.add_argument('--tts_ctrl_step', type=int, default=30, help='number of steps to train the controller at each search iteration')
     parser.add_argument('--tts_ctrl_sample_batch', type=int, default=1, help='sample size of controller of each step')
     parser.add_argument('--tts_n_critic', type=int, default=1, help='number of training steps for discriminator per iter')
 
     # EMA parameters
-    parser.add_argument('--tts_ema', type=float, default=0.995, help='ema')
+    parser.add_argument('--tts_ema', type=float, default=0.9999, help='ema')
     parser.add_argument('--tts_ema_warmup', type=float, default=0., help='ema warm up')
     parser.add_argument('--tts_ema_kimg', type=int, default=500, help='ema thousand images')
 
@@ -155,10 +155,10 @@ def parse_args():
     parser.add_argument('--tts_gen_model', type=str, help='path of gen model')
     parser.add_argument('--tts_dis_model', type=str, help='path of dis model')
     parser.add_argument('--tts_controller', type=str, default='controller', help='path of controller')
-    parser.add_argument('--tts_class_name', type=str, help='The class name to load in UniMiB dataset')
+    parser.add_argument('--tts_class_name', type=str, help='The class name to load in UniMiB dataset', default='stock')
     parser.add_argument('--tts_augment_times', type=int, default=None, help='The times of augment signals compare to original data')
     parser.add_argument('--tts_diff_aug', type=str, default="None", help='differentiable augmentation type')
-    parser.add_argument('--tts_exp_name', type=str, help='The name of exp')
+    parser.add_argument('--tts_exp_name', type=str, help='The name of exp', default='ttsgan')
   
     # evaluation
     parser.add_argument(

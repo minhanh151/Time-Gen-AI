@@ -8,6 +8,7 @@ from config.config import parse_args
 import numpy as np
 import torch 
 import warnings
+import random
 warnings.filterwarnings("ignore")
 
 # 1. TimeGAN model
@@ -38,7 +39,11 @@ def main (args):
   root_dir = "{}/{}".format(args.log_dir, args.data_name)
   
   logger = init_logger(root_dir)
-    
+  
+  random.seed(args.seed)
+  np.random.seed(args.seed % (2 ** 32 - 1))
+  logger.info('Python random seed: {}'.format(args.seed))
+
   dynamic_processor = None
   static_processor = None
   ori_data = real_data_loading(args.data_name, args.seq_len)

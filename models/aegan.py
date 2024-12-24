@@ -24,7 +24,7 @@ class AeGAN:
         self.static_processor, self.dynamic_processor = processors
 
         self.ae = Autoencoder(
-            processors, self.params["hidden_dim"], self.params["embed_dim"], self.params["layers"], dropout=self.params["dropout"])
+            processors, self.params["rts_hidden_dim"], self.params["rts_embed_dim"], self.params["rts_layers"], dropout=self.params["rts_dropout"])
         self.ae.to(self.device)
         """
         self.decoder_optm = torch.optim.Adam(
@@ -42,15 +42,15 @@ class AeGAN:
             params=self.ae.parameters(),
             lr=self.params['ae_lr'],
             betas=(0.9, 0.999),
-            weight_decay=self.params["weight_decay"]
+            weight_decay=self.params["rts_weight_decay"]
         )
         
         self.loss_con = nn.MSELoss(reduction='none')
         self.loss_dis = nn.NLLLoss(reduction='none')
         self.loss_mis = nn.BCELoss(reduction='none')
         
-        self.generator = Generator(self.params["noise_dim"], self.params["hidden_dim"], self.params["layers"]).to(self.device)
-        self.discriminator = Discriminator(self.params["embed_dim"]).to(self.device)
+        self.generator = Generator(self.params["rts_noise_dim"], self.params["rts_hidden_dim"], self.params["rts_layers"]).to(self.device)
+        self.discriminator = Discriminator(self.params["rts_embed_dim"]).to(self.device)
         self.discriminator_optm = torch.optim.RMSprop(
             params=self.discriminator.parameters(),
             lr=self.params['gan_lr'],
@@ -126,7 +126,7 @@ class AeGAN:
     def train_ae(self, dataset, epochs=1000):
         min_loss = 1e15
         best_epsilon = 0
-        train_batch=DataSetIter(dataset=dataset, batch_size=self.params["ae_batch_size"],sampler=RandomSampler())
+        train_batch=DataSetIter(dataset=dataset, batch_size=self.params["rts_ae_batch_size"],sampler=RandomSampler())
         for i in range(epochs):
             self.ae.train()
             tot_loss = 0
@@ -162,7 +162,7 @@ class AeGAN:
         self.discriminator.train()
         self.generator.train()
         self.ae.train()
-        batch_size = self.params["gan_batch_size"]
+        batch_size = self.params["rts_gan_batch_size"]
         idxs = list(range(len(dataset)))
         batch = DataSetIter(dataset=dataset, batch_size=batch_size, sampler=RandomSampler())
         min_loss = 1e15
@@ -283,7 +283,7 @@ class AeGAN:
         return reg
     
     def eval_ae(self, dataset):
-        batch_size = self.params["gan_batch_size"]
+        batch_size = self.params["rts_gan_batch_size"]
         idxs = list(range(len(dataset)))
         batch = DataSetIter(dataset=dataset, batch_size=batch_size, sampler=SequentialSampler())
         res = []
