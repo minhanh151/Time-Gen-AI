@@ -474,7 +474,7 @@ def validate(args, fixed_z, fid_stat, epoch, gen_net: nn.Module, writer_dict, cl
     return mean, fid_score
 
 
-def save_samples(args, fixed_z, fid_stat, epoch, gen_net: nn.Module, writer_dict, clean_dir=True):
+def save_samples(args, fixed_z, epoch, gen_net: nn.Module, clean_dir=True):
 
     # eval mode
     gen_net.eval()

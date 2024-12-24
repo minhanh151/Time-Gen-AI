@@ -23,6 +23,7 @@ from gretel_synthetics.timeseries_dgan.config import DGANConfig
 
 # ==================== TTSGAN ====================================
 from models.GANModels import Generator, Discriminator
+from ttsgan import train_ttstgan
 
 # 2. Data loading
 from data_loading import real_data_loading, loading_RTS_dataset, stock_dataset
@@ -31,35 +32,17 @@ from metrics.discriminative_metrics import discriminative_score_metrics
 from metrics.predictive_metrics import predictive_score_metrics
 from metrics.visualization_metrics import visualization
 
-from train_GAN import main_worker
 
-def main (args):
-  """Main function for timeGAN experiments.
-  
-  Args:
-    - data_name: sine, stock, or energy
-    - seq_len: sequence length
-    - Network parameters (should be optimized for different datasets)
-      - module: gru, lstm, or lstmLN
-      - hidden_dim: hidden dimensions
-      - num_layer: number of layers
-      - iteration: number of training iterations
-      - batch_size: the number of samples in each batch
-    - metric_iteration: number of iterations for metric computation
-  
-  Returns:
-    - ori_data: original data
-    - generated_data: generated synthetic data
-    - metric_results: discriminative and predictive scores
-  """
-  
+
+def main (args):  
   root_dir = "{}/{}".format(args.log_dir, args.data_name)
   
   logger = init_logger(root_dir)
-  
+    
   dynamic_processor = None
   static_processor = None
   ori_data = real_data_loading(args.data_name, args.seq_len)
+  
   ## ============ Data loading ========================
   # rtsgan and timegan both use tensorflow while ttsgan and dgan use pytorch
   if args.model == 'rtsgan':
@@ -72,31 +55,29 @@ def main (args):
     dataset = ori_data  
   elif args.model == 'ttsgan':
     dataset = loading_RTS_dataset(args.data_path, args.data_name, args.seq_len)
-    train_set = stock_dataset(dataset)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle = True)
-
+    dataset = stock_dataset(dataset)
   
   params=vars(args)
-  params["static_processor"]=static_processor
-  params["dynamic_processor"]=dynamic_processor
-
+  
   params["root_dir"]= root_dir
   params["logger"]= logger
   params["device"]= args.device
   
-  params['module'] = args.module
-  params['hidden_dim'] = args.hidden_dim
-  params['num_layer'] = args.timegan_num_layer
-  params['iterations'] = args.iteration
+  params['iterations'] = args.iteration # for rts gan, timegan 
   params['batch_size'] = args.batch_size
-  
   
   print(params.keys())
   
   
   # define model architecture 
   if args.model == 'rtsgan':
-    aegan = AeGAN((static_processor, dynamic_processor), params)  
+    params["static_processor"]=static_processor
+    params["dynamic_processor"]=dynamic_processor
+    aegan = AeGAN((static_processor, dynamic_processor), params)
+  elif args.model == 'timegan': 
+    params['module'] = args.timegan_module
+    params['hidden_dim'] = args.timegan_hidden_dim
+    params['num_layer'] = args.timegan_num_layer 
   elif args.model == 'doublegan':
     config = DGANConfig(
      max_sequence_len=args.seq_len,
@@ -109,22 +90,15 @@ def main (args):
     # import network
     gen_net = Generator(
         seq_len=args.seq_len, 
-        patch_size=3, 
+        patch_size=args.tts_patch_size, 
         channels=args.sample_len, 
         num_classes=1, 
-        latent_dim=100, 
-        embed_dim=10, 
-        depth=3,
-        num_heads=5, 
-        forward_drop_rate=0.5, 
-        attn_drop_rate=0.5
+        latent_dim=args.tts_latent_dim, 
     )
     dis_net = Discriminator(
         in_channels=args.sample_len,
-        patch_size=3,
-        emb_size=10, 
+        patch_size=args.tts_patch_size,
         seq_length = args.seq_len,
-        depth=3, 
         n_classes=1, 
     )
 
@@ -133,17 +107,18 @@ def main (args):
   if args.model == 'rtsgan':
     aegan.train_ae(train_set, args.epochs)
     res, h = aegan.eval_ae(train_set)
-    aegan.train_gan(train_set, args.iterations, args.d_update)
+    aegan.train_gan(train_set, args.iterations, args.rts_d_update)
     generated_data = aegan.synthesize(len(train_set))
     generated_data = [np.array(data) for data in generated_data]
   elif args.model == 'timegan':
     generated_data = timegan(dataset, params)
   elif args.model == 'doublegan':
     dgan.train_numpy(dataset)
+    dgan.save(f'{root_dir}/model.pth')
     _, generated_data = dgan.generate_numpy(len(ori_data))
     generated_data = [np.array(data) for data in generated_data]
   elif args.model == 'ttsgan':
-    main_worker(gen_net, dis_net, train_set, args.device, logger, args)
+    generated_data = train_ttstgan(gen_net, dis_net, dataset, args.device, logger, args)
   
 
   '''

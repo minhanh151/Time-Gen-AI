@@ -243,6 +243,7 @@ class AeGAN:
                 self.logger.info('[Iteration %d/%d] [%f] [D loss: %f] [G loss: %f] [%f]' % (
                     iteration, iterations, time.time()-t1, avg_d_loss, g_loss.item(), reg.item()
                 ))
+        print(self.params["root_dir"])
         torch.save(self.generator.state_dict(), '{}/generator.dat'.format(self.params["root_dir"]))              
     
     def synthesize(self, n, seq_len=24, batch_size=500):
