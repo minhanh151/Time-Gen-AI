@@ -268,7 +268,7 @@ def train_ttstgan(gen_net, dis_net, train_set, gpu, logger, args):
             'best_fid': best_fid,
             'path_helper': args.tts_log_dir,
             'fixed_z': fixed_z
-        }, is_best, args.tts_log_dir['ckpt_path'], filename="checkpoint")
+        }, is_best, args.tts_log_dir['ckpt_path'], filename="checkpoint.pth")
         del avg_gen_net
     
     synthetic_data = [] 
