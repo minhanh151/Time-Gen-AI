@@ -29,18 +29,18 @@ class AeGAN:
         """
         self.decoder_optm = torch.optim.Adam(
             params=self.ae.decoder.parameters(),
-            lr=self.params['ae_lr'],
+            lr=self.params['rts_ae_lr'],
             betas=(0.9, 0.999),
         )
         self.encoder_optm = torch.optim.Adam(
             params=self.ae.encoder.parameters(),
-            lr=self.params['ae_lr'],
+            lr=self.params['rts_ae_lr'],
             betas=(0.9, 0.999),
         )
         """
         self.ae_optm = torch.optim.Adam(
             params=self.ae.parameters(),
-            lr=self.params['ae_lr'],
+            lr=self.params['rts_ae_lr'],
             betas=(0.9, 0.999),
             weight_decay=self.params["rts_weight_decay"]
         )
@@ -53,13 +53,13 @@ class AeGAN:
         self.discriminator = Discriminator(self.params["rts_embed_dim"]).to(self.device)
         self.discriminator_optm = torch.optim.RMSprop(
             params=self.discriminator.parameters(),
-            lr=self.params['gan_lr'],
-            alpha=self.params['gan_alpha'],
+            lr=self.params['rts_gan_lr'],
+            alpha=self.params['rts_gan_alpha'],
         )
         self.generator_optm = torch.optim.RMSprop(
             params=self.generator.parameters(),
-            lr=self.params['gan_lr'],
-            alpha=self.params['gan_alpha'],
+            lr=self.params['rts_gan_lr'],
+            alpha=self.params['rts_gan_alpha'],
         )
 
     def load_ae(self, pretrained_dir=None):
@@ -178,7 +178,7 @@ class AeGAN:
             for j in range(d_update):
                 for batch_x, batch_y in batch:        
                     self.discriminator_optm.zero_grad()
-                    z = torch.randn(batch_size, self.params['noise_dim']).to(self.device)
+                    z = torch.randn(batch_size, self.params['rts_noise_dim']).to(self.device)
 
                     sta = None
                     dyn = batch_x["dyn"].to(self.device)
@@ -228,7 +228,7 @@ class AeGAN:
             self.generator.train()
             self.discriminator.train()
             self.generator_optm.zero_grad()
-            z = torch.randn(batch_size, self.params['noise_dim']).to(self.device)
+            z = torch.randn(batch_size, self.params['rts_noise_dim']).to(self.device)
             fake = self.generator(z)
             g_loss = -torch.mean(self.discriminator(fake))
             """
@@ -251,7 +251,7 @@ class AeGAN:
         self.generator.eval()
         def _gen(n):
             with torch.no_grad():
-                z = torch.randn(n, self.params['noise_dim']).to(self.device)
+                z = torch.randn(n, self.params['rts_noise_dim']).to(self.device)
                 hidden =self.generator(z)
                 dynamics = self.ae.decoder.generate_dynamics(hidden, seq_len)
             res = []

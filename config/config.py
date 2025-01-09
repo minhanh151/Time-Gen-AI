@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument( '--n_samples', default=100, help='Number of sample to infer', type=int)
     
     parser.add_argument("--log-dir", default="./stock_result", dest="log_dir", help="Directory where to write logs / serialized models")
-    parser.add_argument( '--model', choices=['rtsgan', 'timegan', 'doublegan', 'ttsgan'], help='', required=True, type=str)
+    parser.add_argument( '--model', choices=['rtsgan', 'timegan', 'doppelgan', 'ttsgan'], help='', required=True, type=str)
     parser.add_argument('--seed', default=12345, type=int, help='seed for initializing training. ')
     
     # dataset parameters
@@ -50,25 +50,25 @@ def parse_args():
     # rts gan 
     parser.add_argument("--rts_epochs", default=1000, dest="epochs", type=int, help="Number of full passes through training set for autoencoder (only for rtsgan and dgan)")
     parser.add_argument("--rts_d_update", default=5, dest="rts_d_update", type=int, help="discriminator updates per generator update")
-    parser.add_argument("--rts_gan_batch_size", default=512, dest="gan_batch_size", type=int, help="Minibatch size for WGAN")
-    parser.add_argument("--rts_embed_dim", default=96, dest="embed_dim", type=int, help="dim of hidden state")
-    parser.add_argument("--rts_hidden_dim", default=24, dest="hidden_dim", type=int, help="dim of GRU hidden state")
-    parser.add_argument("--rts_layers", default=3, dest="layers", type=int, help="layers")
-    parser.add_argument("--rts_ae_lr", default=1e-3, dest="ae_lr", type=float, help="autoencoder learning rate")
-    parser.add_argument("--rts_weight_decay", default=0, dest="weight_decay", type=float, help="weight decay")
-    parser.add_argument("--rts_scale", default=1, dest="scale", type=float, help="scale")
-    parser.add_argument("--rts_dropout", default=0.0, dest="dropout", type=float,
+    parser.add_argument("--rts_gan_batch_size", default=512, dest="rts_gan_batch_size", type=int, help="Minibatch size for WGAN")
+    parser.add_argument("--rts_embed_dim", default=96, dest="rts_embed_dim", type=int, help="dim of hidden state")
+    parser.add_argument("--rts_hidden_dim", default=24, dest="rts_hidden_dim", type=int, help="dim of GRU hidden state")
+    parser.add_argument("--rts_layers", default=3, dest="rts_layers", type=int, help="layers")
+    parser.add_argument("--rts_ae_lr", default=1e-3, dest="rts_ae_lr", type=float, help="autoencoder learning rate")
+    parser.add_argument("--rts_weight_decay", default=0, dest="rts_weight_decay", type=float, help="weight decay")
+    parser.add_argument("--rts_scale", default=1, dest="rts_scale", type=float, help="scale")
+    parser.add_argument("--rts_dropout", default=0.0, dest="rts_dropout", type=float,
                         help="Amount of dropout(not keep rate, but drop rate) to apply to embeddings part of graph")
-    parser.add_argument("--rts_gan_lr", default=1e-4, dest="gan_lr", type=float, help="WGAN learning rate")
-    parser.add_argument("--rts_gan_alpha", default=0.99, dest="gan_alpha", type=float, help="for RMSprop")
-    parser.add_argument("--rts_noise_dim", default=96, dest="noise_dim", type=int, help="dim of WGAN noise state")
-    parser.add_argument("--rts_ae_batch_size", default=128, dest="ae_batch_size", type=int,
+    parser.add_argument("--rts_gan_lr", default=1e-4, dest="rts_gan_lr", type=float, help="WGAN learning rate")
+    parser.add_argument("--rts_gan_alpha", default=0.99, dest="rts_gan_alpha", type=float, help="for RMSprop")
+    parser.add_argument("--rts_noise_dim", default=96, dest="rts_noise_dim", type=int, help="dim of WGAN noise state")
+    parser.add_argument("--rts_ae_batch_size", default=128, dest="rts_ae_batch_size", type=int,
                         help="Minibatch size for autoencoder")
   
   
   # tts gan
     parser.add_argument('--tts_max_epoch', type=int, default=200, help='number of epochs of training')
-    parser.add_argument('--tts_max_iter', type=int, default=10, help='set the max iteration number')
+    parser.add_argument('--tts_max_iter', type=int, default=500000, help='set the max iteration number')
     parser.add_argument('-tts_gen_bs', '--tts_gen_batch_size', type=int, default=64, help='size of the batches')
     parser.add_argument('-tts_dis_bs', '--tts_dis_batch_size', type=int, default=64, help='size of the batches')
 

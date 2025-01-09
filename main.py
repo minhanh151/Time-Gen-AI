@@ -56,7 +56,7 @@ def main (args):
     dynamic_processor= dataset["dynamic_processor"]
     static_processor= dataset["static_processor"]
     train_set.set_input("sta","dyn","seq_len")
-  elif args.model == 'timegan' or args.model == 'doublegan':
+  elif args.model == 'timegan' or args.model == 'doppelgan':
     dataset = ori_data  
   elif args.model == 'ttsgan':
     dataset = loading_RTS_dataset(args.data_path, args.data_name, args.seq_len)
@@ -83,7 +83,7 @@ def main (args):
     params['module'] = args.timegan_module
     params['hidden_dim'] = args.timegan_hidden_dim
     params['num_layer'] = args.timegan_num_layer 
-  elif args.model == 'doublegan':
+  elif args.model == 'doppelgan':
     config = DGANConfig(
      max_sequence_len=args.seq_len,
      sample_len=args.sample_len,
@@ -117,7 +117,7 @@ def main (args):
     generated_data = [np.array(data) for data in generated_data]
   elif args.model == 'timegan':
     generated_data = timegan(dataset, params)
-  elif args.model == 'doublegan':
+  elif args.model == 'doppelgan':
     dgan.train_numpy(dataset)
     dgan.save(f'{root_dir}/model.pth')
     _, generated_data = dgan.generate_numpy(len(ori_data))

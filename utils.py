@@ -98,7 +98,7 @@ def train_test_divide (data_x, data_x_hat, data_t, data_t_hat, train_rate = 0.8)
 
 def save_checkpoint(states, is_best, output_dir,
                     filename='checkpoint.pth'):
-    print(os.path.join(output_dir, filename))
+    # print(os.path.join(output_dir, filename))
     torch.save(states, os.path.join(output_dir, filename))
     if is_best:
         torch.save(states, os.path.join(output_dir, 'checkpoint_best.pth'))

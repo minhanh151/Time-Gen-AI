@@ -53,7 +53,7 @@ if __name__ == '__main__':
         dynamic_processor= dataset["dynamic_processor"]
         static_processor= dataset["static_processor"]
         train_set.set_input("sta","dyn","seq_len")
-    elif args.model == 'timegan' or args.model == 'doublegan':
+    elif args.model == 'timegan' or args.model == 'doppelgan':
         dataset = ori_data  
     elif args.model == 'ttsgan':
         dataset = loading_RTS_dataset(args.data_path, args.data_name, args.seq_len)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         params['hidden_dim'] = args.timegan_hidden_dim
         params['num_layer'] = args.timegan_num_layer 
         generated_data = timegan (ori_data, params)
-    elif args.model == 'doublegan':
+    elif args.model == 'doppelgan':
         config = DGANConfig(
         max_sequence_len=args.seq_len,
         sample_len=args.sample_len,

@@ -13,3 +13,4 @@ einops
 imageio
 tf-slim
 tensorflow-addons
+opencv-python
