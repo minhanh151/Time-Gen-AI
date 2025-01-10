@@ -11,28 +11,41 @@ using one synthetic dataset and two real-world datasets.
 
 + The model available are: ['ttsgan' , 'rtsgan', 'timegan', 'doppelgan']
 
-+ To train the model, simpy run:
+  + To train the model rtsgan
 
     `
-      python main.py --model "model_name" --iteration 15000 
+      python main.py --model rtsgan --iteration 15000   
+    `
+  + To train the model ttsgan;
+
+    `
+    python main.py --model ttsgan --tts_grow_steps 0 0
     `
 
-  + iteration: 15000 for rtsgan and 50000 for timegan 
+  + To train the model doppel gan
 
-For example:
-`python main.py --model rtsgan`
-
+    `
+    python main.py --model doppelgan
+    `
+  
+  + To train the model timegan
+  
+    `
+    python main.py --model timegan
+    `
 
 
 ## Inference
-+ To generate data using model
++ To generate data using model (currently timegan will be retrain everytime run infer)
 
   `
     python inference.py --model "model_name" --model_path " "
   `
 
+  **if you want to infer with rtsgan, the model path will be the folder that contains all the model weights**
 
-# Evaluation
+
+## Evaluation
 
 Metrics directory
   (a) visualization_metrics.py
