@@ -6,7 +6,7 @@ from __future__ import print_function
 # import models_search
 # import datasets
 # from data_load import *
-from models.GANModels import * 
+from GANModels import * 
 from utils import save_checkpoint, set_log_dir
 from general.functions import train, train_d, validate, save_samples, LinearLrDecay, load_params, copy_params, cur_stages
 from general.adamw import AdamW

@@ -12,7 +12,7 @@ import random
 warnings.filterwarnings("ignore")
 
 # 1. TimeGAN model
-from timegan import timegan
+from models.timegan import timegan
 
 # ====================== RTSGAN ===================================
 from models.aegan import AeGAN
@@ -24,7 +24,7 @@ from gretel_synthetics.timeseries_dgan.config import DGANConfig
 
 # ==================== TTSGAN ====================================
 from models.GANModels import Generator, Discriminator
-from ttsgan import train_ttstgan
+from models.ttsgan import train_ttstgan
 
 # 2. Data loading
 from data_loading import real_data_loading, loading_RTS_dataset, stock_dataset
